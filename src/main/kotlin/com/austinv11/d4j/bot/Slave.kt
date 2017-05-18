@@ -41,10 +41,12 @@ fun debug(msg: String) = LOGGER.debug(msg)
 fun trace(msg: String) = LOGGER.trace(msg)
 
 fun restart() {
+    LOGGER.warn("Restarting...")
     exitProcess(-1)
 }
 
 fun exit() {
+    LOGGER.warn("Shutting down...")
     exitProcess(EXIT_CODE)
 }
 
@@ -58,7 +60,7 @@ fun main(args: Array<String>) {
     
     CLIENT.stream<ReconnectFailureEvent>()
             .filter { it.isShardAbandoned }
-            .doOnNext { warn("Shard abandoned! Restarting...") }
+            .doOnNext { warn("Shard abandoned!") }
             .subscribe { restart() }
     
     CLIENT.stream<ReadyEvent>()
