@@ -3,10 +3,7 @@ package com.austinv11.d4j.bot.command
 import com.austinv11.d4j.bot.CONFIG
 import com.austinv11.d4j.bot.OWNER
 import com.austinv11.d4j.bot.Result
-import com.austinv11.d4j.bot.command.impl.HelpCommand
-import com.austinv11.d4j.bot.command.impl.PingCommand
-import com.austinv11.d4j.bot.command.impl.ShutdownCommand
-import com.austinv11.d4j.bot.command.impl.UpdateCommand
+import com.austinv11.d4j.bot.command.impl.*
 import com.austinv11.d4j.bot.extensions.async
 import com.austinv11.d4j.bot.extensions.coerceTo
 import com.austinv11.d4j.bot.extensions.embedFor
@@ -31,7 +28,8 @@ import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.streams.toList
 
-@Volatile var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand())
+var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand(),
+        RestartCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()
