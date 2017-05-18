@@ -36,7 +36,7 @@ val Command.embed : EmbedBuilder
 
 fun Throwable.embedFor(cmd: Command): EmbedObject = cmd.embed
         .withTitle("Error caught!")
-        .withDesc("```\n${with(StringWriter()) { this@embedFor.printStackTrace(PrintWriter(this)) }}```")
+        .withDesc("```\n${StringWriter().apply { this@embedFor.printStackTrace(PrintWriter(this)) }}```")
         .build()
 
 fun String.embedFor(cmd: Command): EmbedObject = cmd.embed

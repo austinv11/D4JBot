@@ -84,11 +84,14 @@ class Command(val executor: CommandExecutor,
 
     fun execute() {
         try {
-            val result = executor.submit(this)
-            result.doOnError { async { it ?: channel.sendMessage((it as? CommandException)?.message?.embedFor(this) ?: it.embedFor(this)) } }
-            result.filter { it != Result.NONE }
+            val result = executor.submit(this).filter { it != Result.NONE }
+            result.doOnError({ true }, { handleErr(it) })
                     .subscribe { async { channel.sendMessage(if (it == Result.SUCCESS) CONFIG.success_message else CONFIG.error_message) } }
-        } catch (e: Throwable) {e.printStackTrace() }
+        } catch (e: Throwable) { handleErr(e) }
+    }
+
+    private fun handleErr(e: Throwable?) {
+        async { channel.sendMessage((e as? CommandException)?.message?.embedFor(this) ?: e?.embedFor(this)) }
     }
 }
 
@@ -227,7 +230,7 @@ abstract class CommandExecutor {
             
             val isOwner = cmd.author.longID == OWNER.longID
             
-            if (!isOwner) {
+            if (isOwner) {
 
                 if (requiresOwner) throw CommandException("Only my owner can do that!")
 

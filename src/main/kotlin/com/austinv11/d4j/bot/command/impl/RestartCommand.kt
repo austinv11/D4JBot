@@ -12,7 +12,7 @@ class RestartCommand() : CommandExecutor() {
     override val name: String = "restart"
     override val aliases: Array<String> = arrayOf("reboot", "reset", "r")
 
-    @Executor("Restarts down the bot.", requiresOwner = true)
+    @Executor("Restarts the bot.", requiresOwner = true)
     fun execute() {
         val cmd = context
         buffer { cmd.channel.sendMessage(cmd.embed.withDesc("Restarting...").build()) }
