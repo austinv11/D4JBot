@@ -9,6 +9,7 @@ import com.austinv11.d4j.bot.extensions.buffer
 import com.austinv11.d4j.bot.extensions.embed
 import com.austinv11.d4j.bot.restart
 import com.github.kittinunf.fuel.httpDownload
+import sx.blah.discord.util.RateLimitException
 import java.io.File
 
 const val DOWNLOAD_URL = "https://jitpack.io/com/github/austinv11/D4JBot/-SNAPSHOT/D4JBot--SNAPSHOT-all.jar"
@@ -38,7 +39,9 @@ class UpdateCommand() : CommandExecutor() {
                     result.fold({ d -> 
                         LOGGER.info("Updated! Restarting...")
                         buffer { message.edit(context.embed.withDesc("Updated!").build()) }
-                        temp.copyTo(File(JAR_PATH), true)
+                        val currJar = File(JAR_PATH)
+                        currJar.delete()
+                        temp.copyTo(currJar, true)
                         restart()
                     }, { err ->
                         LOGGER.warn("Unable to update!")
@@ -48,5 +51,10 @@ class UpdateCommand() : CommandExecutor() {
                     temp.delete()
                     channel.typingStatus = false
                 }.timeout(5 * 60 * 1000)
+                .progress { readBytes, totalBytes ->
+                    val percentage = "%.2f".format((readBytes.toDouble()/totalBytes.toDouble()) * 100.toDouble()) + "%"
+                    try { message.edit(context.embed.withDesc("$percentage done").build()) } catch (e: RateLimitException) {}
+                    LOGGER.info("$percentage done")
+                }
     }
 }
