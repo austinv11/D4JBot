@@ -3,6 +3,7 @@ package com.austinv11.d4j.bot.command
 import com.austinv11.d4j.bot.CONFIG
 import com.austinv11.d4j.bot.OWNER
 import com.austinv11.d4j.bot.Result
+import com.austinv11.d4j.bot.command.impl.HelpCommand
 import com.austinv11.d4j.bot.command.impl.PingCommand
 import com.austinv11.d4j.bot.command.impl.ShutdownCommand
 import com.austinv11.d4j.bot.command.impl.UpdateCommand
@@ -24,12 +25,13 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.functions
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.streams.toList
 
-@Volatile var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand())
+@Volatile var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()
@@ -83,10 +85,12 @@ class Command(val executor: CommandExecutor,
               val rawArgs: Array<String> = Arrays.copyOfRange(raw.rawArgs(), 1, raw.rawArgs().size)) {
 
     fun execute() {
-        val result = executor.submit(this)
-        result.doOnError { async { it ?: channel.sendMessage((it as? CommandException)?.message?.embedFor(this) ?: it.embedFor(this)) } }
-        result.filter { it != Result.NONE }
-                .subscribe { async { channel.sendMessage(if (it == Result.SUCCESS) CONFIG.success_message else CONFIG.error_message) } }
+        try {
+            val result = executor.submit(this)
+            result.doOnError { async { it ?: channel.sendMessage((it as? CommandException)?.message?.embedFor(this) ?: it.embedFor(this)) } }
+            result.filter { it != Result.NONE }
+                    .subscribe { async { channel.sendMessage(if (it == Result.SUCCESS) CONFIG.success_message else CONFIG.error_message) } }
+        } catch (e: Throwable) {e.printStackTrace() }
     }
 }
 
@@ -116,7 +120,7 @@ abstract class CommandExecutor {
     }
     
     fun submit(cmd: Command): Mono<Result> = wrappers.toFlux().sort { o1, o2 -> 
-                if (o1.requiredPerms.size < o2.requiredPerms.size) -1 else if (o1.requiredPerms.size > o2.requiredPerms.size) 1 else 0
+                if (o1.params.size < o2.params.size) -1 else if (o1.params.size > o2.params.size) 1 else 0
             }.filter { it.paramDescriptions.stream().map { it.third }.filter { it }.count() <= cmd.rawArgs.size }
             .filter { it.shouldBeInvoked(cmd) }
             .next()
@@ -134,15 +138,17 @@ abstract class CommandExecutor {
                             val method: KFunction<*>) {
         val params: List<KParameter> = method.valueParameters
         val syntaxString: String by lazy {
-            CONFIG.prefix + executor.name + StringJoiner(" ").apply { 
-                params.forEach { 
-                    this@apply.add(with (if (it.isOptional) StringJoiner(": ", "[", "]") else StringJoiner(": ")) {
+            CONFIG.prefix + executor.name + " " + StringJoiner(" ").apply {
+                params.forEach {
+                    val joiner = if (it.isOptional) StringJoiner(": ", "[", "]") else StringJoiner(": ")
+                    with(joiner) {
                         this@with.add(it.name)
                         this@with.add(it.type.jvmErasure.simpleName)
                         if (it.type.isMarkedNullable) this@with.add("?")
-                    }.toString())
+                    }
+                    this@apply.add(joiner.toString())
                 } 
-            }
+            }.toString()
         }
         val paramDescriptions: List<Triple<String, String?, Boolean>> = params
                 .stream()
@@ -163,47 +169,51 @@ abstract class CommandExecutor {
 
         fun Array<String>.mapArgs(cmd: Command): Array<Any?>? {
             val args = arrayOfNulls<Any?>(this.size)
-            this.forEachIndexed { i, arg -> 
-                val paramType = params[i].type
-                if (arg == "null") {
-                    if (paramType.isMarkedNullable) args[i] = null
-                    else if (String::class.java == paramType.jvmErasure.java) args[i] = "null"
-                    else throw CommandException("Attempting to pass null to a non-nullable argument!")
-                } else if (Number::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a number at argument $i!")
-                } else if (Boolean::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a boolean at argument $i!")
-                } else if (Char::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a character at argument $i!")
-                } else if (String::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg
-                } else if (paramType.jvmErasure.java.isArray) {
-                    args[i] = arg.split(",( |)".toRegex()).toTypedArray().mapArgs(cmd)
-                } else if (IMessage::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a message at argument $i!")
-                } else if (IVoiceChannel::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a voice channel at argument $i!")
-                } else if (IChannel::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a channel at argument $i!")
-                } else if (IGuild::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a guild at argument $i!")
-                } else if (IUser::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a user at argument $i!")
-                } else if (IRole::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a role at argument $i!")
-                } else if (IEmoji::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected an emoji at argument $i!")
-                } else if (StatusType::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a status type at argument $i!")
-                } else if (Permissions::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a permission at argument $i!")
-                } else if (VerificationLevel::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a verification level at argument $i!")
-                } else if (Command::class.java.isAssignableFrom(paramType.jvmErasure.java)) {
-                    args[i] = cmd
-                } else {
-                    throw CommandException("Unable to map argument $i!")
+            try {
+                this.forEachIndexed { i, arg ->
+                    val paramType = params[i].type
+                    if (arg == "null") {
+                        if (paramType.isMarkedNullable) args[i] = null
+                        else if (String::class.java == paramType.jvmErasure.java) args[i] = "null"
+                        else throw CommandException("Attempting to pass null to a non-nullable argument!")
+                    } else if (paramType.jvmErasure.isSubclassOf(Number::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a number at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(Boolean::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a boolean at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(Char::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a character at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(String::class)) {
+                        args[i] = arg
+                    } else if (paramType.jvmErasure.java.isArray) {
+                        args[i] = arg.split(",( |)".toRegex()).toTypedArray().mapArgs(cmd)
+                    } else if (paramType.jvmErasure.isSubclassOf(IMessage::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a message at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(IVoiceChannel::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a voice channel at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(IChannel::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a channel at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(IGuild::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a guild at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(IUser::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a user at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(IRole::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a role at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(IEmoji::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected an emoji at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(StatusType::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a status type at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(Permissions::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a permission at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(VerificationLevel::class)) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a verification level at argument $i!")
+                    } else if (paramType.jvmErasure.isSubclassOf(Command::class)) {
+                        args[i] = cmd
+                    } else {
+                        throw CommandException("Unable to map argument $i!")
+                    }
                 }
+            } catch (e: Exception) {
+                return null
             }
             return args
         }

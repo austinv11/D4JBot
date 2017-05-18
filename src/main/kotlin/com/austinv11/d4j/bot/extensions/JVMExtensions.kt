@@ -6,14 +6,14 @@ import sx.blah.discord.handle.obj.*
 import kotlin.reflect.KClass
 
 fun String.coerceTo(`class`: KClass<*>, command: Command): Any? = when(`class`) {
-    Float::class -> java.lang.Float.valueOf(this)
-    Double::class -> java.lang.Double.valueOf(this)
-    Byte::class -> java.lang.Byte.valueOf(this)
-    Short::class -> java.lang.Short.valueOf(this)
-    Int::class -> java.lang.Integer.valueOf(this)
-    Long::class -> if (this.startsWith("-")) java.lang.Long.valueOf(this) else java.lang.Long.parseUnsignedLong(this)
-    Boolean::class -> if (java.lang.Boolean.valueOf(this)) true else if (!this.equals("false", true)) null else true
-    Char::class -> if (this.length > 1) null else this.first() 
+    Float::class, Float::class.javaPrimitiveType!! -> java.lang.Float.valueOf(this)
+    Double::class, Double::class.javaPrimitiveType!! -> java.lang.Double.valueOf(this)
+    Byte::class, Byte::class.javaPrimitiveType!! -> java.lang.Byte.valueOf(this)
+    Short::class, Short::class.javaPrimitiveType!! -> java.lang.Short.valueOf(this)
+    Int::class, Int::class.javaPrimitiveType!! -> java.lang.Integer.valueOf(this)
+    Long::class, Long::class.javaPrimitiveType!! -> if (this.startsWith("-")) java.lang.Long.valueOf(this) else java.lang.Long.parseUnsignedLong(this)
+    Boolean::class, Boolean::class.javaPrimitiveType!! -> if (java.lang.Boolean.valueOf(this)) true else if (!this.equals("false", true)) null else true
+    Char::class, Char::class.javaPrimitiveType!! -> if (this.length > 1) null else this.first()
     String::class -> this
     IMessage::class -> buffer {
         try {
