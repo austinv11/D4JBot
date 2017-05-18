@@ -230,7 +230,7 @@ abstract class CommandExecutor {
             
             val isOwner = cmd.author.longID == OWNER.longID
             
-            if (isOwner) {
+            if (!isOwner) {
 
                 if (requiresOwner) throw CommandException("Only my owner can do that!")
 
