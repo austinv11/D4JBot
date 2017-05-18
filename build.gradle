@@ -12,7 +12,7 @@ buildscript {
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.4"
     }
 }
-
+//https://jitpack.io/com/github/austinv11/D4JBot/-SNAPSHOT/D4JBot-1.0-SNAPSHOT-all.jar
 apply plugin: 'java'
 apply plugin: 'kotlin'
 apply plugin: 'idea'
@@ -44,4 +44,20 @@ dependencies {
     compile 'com.google.code.gson:gson:2.8.0'
     
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+    archives shadowJar
 }
