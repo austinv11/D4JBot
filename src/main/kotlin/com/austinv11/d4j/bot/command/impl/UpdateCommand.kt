@@ -45,11 +45,8 @@ class UpdateCommand() : CommandExecutor() {
                         err.printStackTrace()
                         throw err
                     })
-                }.timeout(5 * 60 * 1000)
-                .callback {
-                    LOGGER.debug("done")
-                    temp.delete() 
+                    temp.delete()
                     channel.typingStatus = false
-                }
+                }.timeout(5 * 60 * 1000)
     }
 }
