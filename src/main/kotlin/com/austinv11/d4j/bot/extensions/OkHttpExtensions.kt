@@ -23,6 +23,11 @@ inline fun <reified T> String.get(): Mono<T> = Mono.create {
 }
 
 fun String.download(to: File): Mono<Unit> = Mono.from {
-    val response = rest.newCall(Request.Builder().url(this).build()).execute()
-    IOUtils.copy(response!!.body()!!.byteStream()!!, to.outputStream())
+    try {
+        val response = rest.newCall(Request.Builder().url(this).build()).execute()
+        IOUtils.copy(response!!.body()!!.byteStream()!!, to.outputStream())
+        it.onNext(Unit)
+    } catch (e: Throwable) {
+        it.onError(e)
+    }
 }
