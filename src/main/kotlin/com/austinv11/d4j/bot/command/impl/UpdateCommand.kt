@@ -40,6 +40,7 @@ class UpdateCommand() : CommandExecutor() {
         currJar.renameTo(temp)
 
         DOWNLOAD_URL.download(currJar)
+                .doOnNext { println("REEEEEE") }
                 .doOnNext { channel.typingStatus = false }
                 .doOnError {
                     LOGGER.warn("Unable to update!")
