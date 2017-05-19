@@ -5,8 +5,9 @@ import org.apache.commons.io.IOUtils
 import reactor.core.publisher.Mono
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
-val rest = OkHttpClient()
+val rest = OkHttpClient.Builder().connectTimeout(5, TimeUnit.MINUTES).readTimeout(5, TimeUnit.MILLISECONDS).writeTimeout(5, TimeUnit.MILLISECONDS).build()
 
 private val JSON = MediaType.parse("application/json; charset=utf-8")
 
