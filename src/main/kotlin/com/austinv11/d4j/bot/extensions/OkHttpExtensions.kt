@@ -22,15 +22,7 @@ inline fun <reified T> String.get(): Mono<T> = Mono.create {
     })
 }
 
-fun String.download(to: File): Mono<Unit> = Mono.create {
-    rest.newCall(Request.Builder().url(this).build()).enqueue(object: Callback {
-        override fun onFailure(call: Call?, e: IOException?) {
-            it.error(e)
-        }
-
-        override fun onResponse(call: Call?, response: Response?) {
-            IOUtils.copy(response!!.body()!!.byteStream()!!, to.outputStream())
-            it.success()
-        }
-    })
+fun String.download(to: File): Mono<Unit> = Mono.from {
+    val response = rest.newCall(Request.Builder().url(this).build()).execute()
+    IOUtils.copy(response!!.body()!!.byteStream()!!, to.outputStream())
 }
