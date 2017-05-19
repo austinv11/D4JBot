@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-val rest = OkHttpClient.Builder().connectTimeout(5, TimeUnit.MINUTES).readTimeout(5, TimeUnit.MILLISECONDS).writeTimeout(5, TimeUnit.MILLISECONDS).build()
+val rest = OkHttpClient.Builder().connectTimeout(5, TimeUnit.MINUTES).readTimeout(5, TimeUnit.MILLISECONDS).writeTimeout(5, TimeUnit.MILLISECONDS).retryOnConnectionFailure(true).followRedirects(true).followSslRedirects(true).build()
 
 private val JSON = MediaType.parse("application/json; charset=utf-8")
 
