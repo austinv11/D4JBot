@@ -40,15 +40,15 @@ class UpdateCommand() : CommandExecutor() {
         currJar.renameTo(temp)
 
         DOWNLOAD_URL.download(currJar)
-                .doOnNext { println("REEEEEE") }
-                .doOnNext { channel.typingStatus = false }
-                .doOnError {
+                .doOnError({ true }, {
+                    channel.typingStatus = false
                     LOGGER.warn("Unable to update!")
                     temp.renameTo(currJar)
                     buffer { message.edit(context.embed.withDesc("Update Failed!").build()) }
                     it.printStackTrace()
                     throw it
-                }.subscribe {
+                }).subscribe {
+                    channel.typingStatus = false
                     LOGGER.info("Updated! Restarting...")
                     buffer { message.edit(context.embed.withDesc("Updated!").build()) }
                     temp.delete()
