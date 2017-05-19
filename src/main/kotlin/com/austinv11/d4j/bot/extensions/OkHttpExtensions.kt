@@ -11,15 +11,12 @@ val rest = OkHttpClient()
 private val JSON = MediaType.parse("application/json; charset=utf-8")
 
 inline fun <reified T> String.get(): Mono<T> = Mono.create {
-    rest.newCall(Request.Builder().url(this).addHeader("Content-Type", "application/json; charset=utf-8").build()).enqueue(object: Callback {
-        override fun onFailure(call: Call?, e: IOException?) {
-            it.error(e)
-        }
-
-        override fun onResponse(call: Call?, response: Response?) {
-            it.success(response?.body()?.string()?.obj<T>())
-        }
-    })
+    try {
+        val response = rest.newCall(Request.Builder().url(this).addHeader("Content-Type", "application/json; charset=utf-8").build()).execute()
+        it.success(response?.body()?.string()?.obj<T>())
+    } catch (e: Throwable) {
+        it.error(e)
+    }
 }
 
 fun String.download(to: File): Mono<Boolean> = Mono.create {
