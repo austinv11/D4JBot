@@ -23,7 +23,7 @@ inline fun <reified T> String.get(): Mono<T> = Mono.create {
 }
 
 fun String.download(to: File): Mono<Unit> = Mono.create {
-    rest.newCall(Request.Builder().url(this).addHeader("Content-Type", "application/json; charset=utf-8").build()).enqueue(object: Callback {
+    rest.newCall(Request.Builder().url(this).build()).enqueue(object: Callback {
         override fun onFailure(call: Call?, e: IOException?) {
             it.error(e)
         }

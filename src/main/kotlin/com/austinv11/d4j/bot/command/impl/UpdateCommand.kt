@@ -39,44 +39,43 @@ class UpdateCommand() : CommandExecutor() {
         val temp = File.createTempFile("bot", ".jar")
         currJar.renameTo(temp)
 
-//        DOWNLOAD_URL.download(currJar)
-//                .doOnNext { LOGGER.info("pls") }
-//                .doOnNext { channel.typingStatus = false }
-//                .doOnError {
-//                    LOGGER.warn("Unable to update!")
-//                    temp.renameTo(currJar)
-//                    buffer { message.edit(context.embed.withDesc("Update Failed!").build()) }
-//                    it.printStackTrace()
-//                    throw it
-//                }.subscribe {
-//                    LOGGER.info("Updated! Restarting...")
-//                    buffer { message.edit(context.embed.withDesc("Updated!").build()) }
-//                    temp.delete()
-//                    restart()
-//                }
+        DOWNLOAD_URL.download(currJar)
+                .doOnNext { channel.typingStatus = false }
+                .doOnError {
+                    LOGGER.warn("Unable to update!")
+                    temp.renameTo(currJar)
+                    buffer { message.edit(context.embed.withDesc("Update Failed!").build()) }
+                    it.printStackTrace()
+                    throw it
+                }.subscribe {
+                    LOGGER.info("Updated! Restarting...")
+                    buffer { message.edit(context.embed.withDesc("Updated!").build()) }
+                    temp.delete()
+                    restart()
+                }
 
-        OkHttpClient().newCall(Request.Builder().url(DOWNLOAD_URL).get().build()).enqueue(object: Callback {
-            override fun onFailure(call: Call?, e: IOException?) {
-                LOGGER.warn("Unable to update!")
-                temp.renameTo(currJar)
-                e!!.printStackTrace()
-                cleanup()
-                throw e
-            }
-
-            override fun onResponse(call: Call?, response: Response?) {
-                IOUtils.copy(response!!.body()!!.byteStream()!!, currJar.outputStream())
-                LOGGER.info("Updated! Restarting...")
-                buffer { message.edit(context.embed.withDesc("Updated!").build()) }
-                temp.delete()
-                cleanup()
-                restart()
-            }
-
-            fun cleanup() {
-                channel.typingStatus = false
-            }
-        })
+//        OkHttpClient().newCall(Request.Builder().url(DOWNLOAD_URL).get().build()).enqueue(object: Callback {
+//            override fun onFailure(call: Call?, e: IOException?) {
+//                LOGGER.warn("Unable to update!")
+//                temp.renameTo(currJar)
+//                e!!.printStackTrace()
+//                cleanup()
+//                throw e
+//            }
+//
+//            override fun onResponse(call: Call?, response: Response?) {
+//                IOUtils.copy(response!!.body()!!.byteStream()!!, currJar.outputStream())
+//                LOGGER.info("Updated! Restarting...")
+//                buffer { message.edit(context.embed.withDesc("Updated!").build()) }
+//                temp.delete()
+//                cleanup()
+//                restart()
+//            }
+//
+//            fun cleanup() {
+//                channel.typingStatus = false
+//            }
+//        })
 
 //        DOWNLOAD_URL.httpDownload().destination { _, _ -> currJar }
 //                .responseString { request, response, result ->
