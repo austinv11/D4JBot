@@ -8,7 +8,7 @@ import sx.blah.discord.handle.obj.IUser
 
 class UnignoreCommand : CommandExecutor() {
 
-    override val name: String = "ignore"
+    override val name: String = "unignore"
     override val aliases: Array<String> = arrayOf()
 
     @Executor("Makes this bot unignore the specified user.", requiresOwner = true)
