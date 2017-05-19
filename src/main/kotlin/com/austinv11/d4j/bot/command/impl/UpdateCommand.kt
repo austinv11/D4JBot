@@ -12,8 +12,10 @@ import com.austinv11.d4j.bot.extensions.embedFor
 import com.austinv11.d4j.bot.restart
 import okhttp3.*
 import org.apache.commons.io.IOUtils
+import reactor.core.publisher.Mono
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 const val DOWNLOAD_URL = "https://jitpack.io/com/github/austinv11/D4JBot/-SNAPSHOT/D4JBot--SNAPSHOT-all.jar"
 
@@ -39,44 +41,43 @@ class UpdateCommand() : CommandExecutor() {
         val temp = File.createTempFile("bot", ".jar")
         currJar.renameTo(temp)
 
-        DOWNLOAD_URL.download(currJar)
-                .doOnError({ true }, {
-                    channel.typingStatus = false
-                    LOGGER.warn("Unable to update!")
-                    temp.renameTo(currJar)
-                    buffer { message.edit(context.embed.withDesc("Update Failed!").build()) }
-                    it.printStackTrace()
-                    throw it
-                }).subscribe {
-                    channel.typingStatus = false
-                    LOGGER.info("Updated! Restarting...")
-                    buffer { message.edit(context.embed.withDesc("Updated!").build()) }
-                    temp.delete()
-                    restart()
-                }
+        Mono.create<Boolean> {
+            try {
+                ProcessBuilder("wget", DOWNLOAD_URL).inheritIO().start().waitFor(5, TimeUnit.MINUTES)
+                it.success(true)
+            } catch (e: Exception) {
+                it.error(e)
+            }
+        }.doOnError({ true }, {
+            channel.typingStatus = false
+            LOGGER.warn("Unable to update!")
+            temp.renameTo(currJar)
+            buffer { message.edit(context.embed.withDesc("Update Failed!").build()) }
+            it.printStackTrace()
+            throw it
+        }).subscribe {
+            channel.typingStatus = false
+            LOGGER.info("Updated! Restarting...")
+            buffer { message.edit(context.embed.withDesc("Updated!").build()) }
+            temp.delete()
+            restart()
+        }
 
-//        OkHttpClient().newCall(Request.Builder().url(DOWNLOAD_URL).get().build()).enqueue(object: Callback {
-//            override fun onFailure(call: Call?, e: IOException?) {
-//                LOGGER.warn("Unable to update!")
-//                temp.renameTo(currJar)
-//                e!!.printStackTrace()
-//                cleanup()
-//                throw e
-//            }
-//
-//            override fun onResponse(call: Call?, response: Response?) {
-//                IOUtils.copy(response!!.body()!!.byteStream()!!, currJar.outputStream())
-//                LOGGER.info("Updated! Restarting...")
-//                buffer { message.edit(context.embed.withDesc("Updated!").build()) }
-//                temp.delete()
-//                cleanup()
-//                restart()
-//            }
-//
-//            fun cleanup() {
-//                channel.typingStatus = false
-//            }
-//        })
+//        DOWNLOAD_URL.download(currJar)
+//                .doOnError({ true }, {
+//                    channel.typingStatus = false
+//                    LOGGER.warn("Unable to update!")
+//                    temp.renameTo(currJar)
+//                    buffer { message.edit(context.embed.withDesc("Update Failed!").build()) }
+//                    it.printStackTrace()
+//                    throw it
+//                }).subscribe {
+//                    channel.typingStatus = false
+//                    LOGGER.info("Updated! Restarting...")
+//                    buffer { message.edit(context.embed.withDesc("Updated!").build()) }
+//                    temp.delete()
+//                    restart()
+//                }
 
 //        DOWNLOAD_URL.httpDownload().destination { _, _ -> currJar }
 //                .responseString { request, response, result ->
