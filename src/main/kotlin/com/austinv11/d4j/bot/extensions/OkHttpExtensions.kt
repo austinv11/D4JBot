@@ -4,7 +4,6 @@ import okhttp3.*
 import org.apache.commons.io.IOUtils
 import reactor.core.publisher.Mono
 import java.io.File
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 val rest = OkHttpClient.Builder().connectTimeout(5, TimeUnit.MINUTES).readTimeout(5, TimeUnit.MILLISECONDS).writeTimeout(5, TimeUnit.MILLISECONDS).build()
