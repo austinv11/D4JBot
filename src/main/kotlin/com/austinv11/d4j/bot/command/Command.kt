@@ -29,7 +29,7 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.streams.toList
 
 var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand(),
-        RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand())
+        RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()
@@ -144,7 +144,19 @@ abstract class CommandExecutor {
                     val joiner = if (it.isOptional) StringJoiner(": ", "[", "]") else StringJoiner(": ")
                     with(joiner) {
                         this@with.add(it.name)
-                        this@with.add(it.type.jvmErasure.simpleName)
+                        if (it.type.jvmErasure.java.isEnum) {
+                            this@with.add(buildString {
+                                this.append("(")
+                                val constants = it.type.jvmErasure.java.enumConstants
+                                constants.forEachIndexed { i, con ->
+                                    append(con.toString().toLowerCase())
+                                    if (i != constants.size-1) append(", ")
+                                }
+                                this.append(")")
+                            })
+                        } else {
+                            this@with.add(it.type.jvmErasure.simpleName)
+                        }
                         if (it.type.isMarkedNullable) this@with.add("?")
                     }
                     this@apply.add(joiner.toString())
@@ -209,6 +221,8 @@ abstract class CommandExecutor {
                         args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a verification level at argument $i!")
                     } else if (paramType.jvmErasure.isSubclassOf(Command::class)) {
                         args[i] = cmd
+                    } else if (paramType.jvmErasure.java.isEnum) {
+                        args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected ${Arrays.toString(paramType.jvmErasure.java.enumConstants)} at argument $i!")
                     } else {
                         throw CommandException("Unable to map argument $i!")
                     }

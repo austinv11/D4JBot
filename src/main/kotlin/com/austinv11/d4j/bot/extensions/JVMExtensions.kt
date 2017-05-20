@@ -94,5 +94,5 @@ fun String.coerceTo(`class`: KClass<*>, command: Command): Any? = when(`class`) 
     StatusType::class -> StatusType.get(this)
     Permissions::class -> try { Permissions.valueOf(this) } catch (e: Throwable) { null }
     VerificationLevel::class -> VerificationLevel.valueOf(this)
-    else -> null
+    else -> if (`class`.java.isEnum) `class`.java.enumConstants.firstOrNull { it.toString().equals(this, true) } else null
 }
