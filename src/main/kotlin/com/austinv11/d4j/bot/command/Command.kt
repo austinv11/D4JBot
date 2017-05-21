@@ -29,7 +29,7 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.streams.toList
 
 var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand(),
-        RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand())
+        RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand(), KotlinEvalCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()
@@ -181,22 +181,29 @@ abstract class CommandExecutor {
         val handle = MethodHandles.lookup().unreflect(method.javaMethod).bindTo(executor)!!
 
         fun Array<String>.mapArgs(cmd: Command): Array<Any?>? {
-            val args = arrayOfNulls<Any?>(this.size)
+            var args = arrayOfNulls<Any?>(this.size)
             try {
                 this.forEachIndexed { i, arg ->
+                    if (i >= params.size && params.lastOrNull()?.type?.jvmErasure?.isSubclassOf(String::class) ?: false) {
+                        args = args.copyOf(i)
+                        val curr = args[i-1] as String
+                        args[i-1] = curr + " " + params.subList(i, params.size).joinToString(" ")
+                        return@mapArgs args
+                    }
+                    
                     val paramType = params[i].type
                     if (arg == "null") {
                         if (paramType.isMarkedNullable) args[i] = null
                         else if (String::class.java == paramType.jvmErasure.java) args[i] = "null"
                         else throw CommandException("Attempting to pass null to a non-nullable argument!")
+                    } else if (paramType.jvmErasure.isSubclassOf(String::class)) {
+                        args[i] = arg
                     } else if (paramType.jvmErasure.isSubclassOf(Number::class)) {
                         args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a number at argument $i!")
                     } else if (paramType.jvmErasure.isSubclassOf(Boolean::class)) {
                         args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a boolean at argument $i!")
                     } else if (paramType.jvmErasure.isSubclassOf(Char::class)) {
                         args[i] = arg.coerceTo(paramType.jvmErasure, cmd) ?: throw CommandException("Expected a character at argument $i!")
-                    } else if (paramType.jvmErasure.isSubclassOf(String::class)) {
-                        args[i] = arg
                     } else if (paramType.jvmErasure.java.isArray) {
                         args[i] = arg.split(",( |)".toRegex()).toTypedArray().mapArgs(cmd)
                     } else if (paramType.jvmErasure.isSubclassOf(IMessage::class)) {

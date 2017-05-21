@@ -6,15 +6,10 @@ import com.austinv11.d4j.bot.command.CommandExecutor
 import com.austinv11.d4j.bot.command.Executor
 import com.austinv11.d4j.bot.command.context
 import com.austinv11.d4j.bot.extensions.buffer
-import com.austinv11.d4j.bot.extensions.download
 import com.austinv11.d4j.bot.extensions.embed
-import com.austinv11.d4j.bot.extensions.embedFor
 import com.austinv11.d4j.bot.restart
-import okhttp3.*
-import org.apache.commons.io.IOUtils
 import reactor.core.publisher.Mono
 import java.io.File
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 const val DOWNLOAD_URL = "https://jitpack.io/com/github/austinv11/D4JBot/-SNAPSHOT/D4JBot--SNAPSHOT-all.jar"
