@@ -29,7 +29,8 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.streams.toList
 
 var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand(),
-        RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand(), KotlinEvalCommand())
+        RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand(), KotlinEvalCommand(),
+        JavaEvalCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()

@@ -9,7 +9,7 @@ import javax.script.ScriptException
 object KotlinScriptCompiler : IScriptCompiler {
     
     init {
-        System.setProperty("kotlin.compiler.jar", JAR_PATH)
+        System.setProperty("kotlin.compiler.jar", JAR_PATH) //So kotlin doesn't like us packaging the compiler...Screw it
     }
 
     val defaultImports = JAVA_IMPORTS + KOTLIN_IMPORTS + DISCORD4J_IMPORTS + REACTOR_IMPORTS + FUEL_IMPORTS + BOT_IMPORTS
