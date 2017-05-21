@@ -1,11 +1,16 @@
 package com.austinv11.d4j.bot.scripting
 
+import com.austinv11.d4j.bot.JAR_PATH
 import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmDaemonCompileScriptEngine
 import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmDaemonLocalEvalScriptEngineFactory
 import java.io.*
 import javax.script.ScriptException
 
 object KotlinScriptCompiler : IScriptCompiler {
+    
+    init {
+        System.setProperty("kotlin.compiler.jar", JAR_PATH)
+    }
 
     val defaultImports = JAVA_IMPORTS + KOTLIN_IMPORTS + DISCORD4J_IMPORTS + REACTOR_IMPORTS + FUEL_IMPORTS + BOT_IMPORTS
 
