@@ -1,6 +1,7 @@
 package com.austinv11.d4j.bot.extensions
 
 import com.austinv11.d4j.bot.CONFIG
+import com.austinv11.d4j.bot.OWNER
 import com.austinv11.d4j.bot.command.Command
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
@@ -53,3 +54,6 @@ var IUser.isIgnored: Boolean
         }
         CONFIG.save()
     }
+
+val IUser.isBotOwner: Boolean
+    get() = OWNER.longID == this.longID

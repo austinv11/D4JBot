@@ -22,7 +22,7 @@ class HelpCommand() : CommandExecutor() {
     fun execute(@Parameter("The command number (1-indexed).") command: Int): EmbedBuilder = execute(COMMANDS[command-1])
 
     @Executor("Provides an explanation of a specific command.")
-    fun execute(@Parameter("The command (or alias) name.") command: String): EmbedBuilder = execute(COMMANDS.find { it.checkCommandName(command) }!!)
+    fun execute(@Parameter("The command (or alias) name.") command: String): EmbedBuilder = execute(COMMANDS.find { it.checkCommandName(command) } ?: throw CommandException("$command Not found!") )
 
     fun execute(cmd: CommandExecutor): EmbedBuilder = context.embed.apply {
         withTitle("Help Page for ${cmd.name}")

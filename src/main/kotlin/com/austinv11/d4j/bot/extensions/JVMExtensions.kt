@@ -96,3 +96,12 @@ fun String.coerceTo(`class`: KClass<*>, command: Command): Any? = when(`class`) 
     VerificationLevel::class -> VerificationLevel.valueOf(this)
     else -> if (`class`.java.isEnum) `class`.java.enumConstants.firstOrNull { it.toString().equals(this, true) } else null
 }
+
+val Long.unsignedString: String
+    get() = java.lang.Long.toUnsignedString(this)
+
+val String.unsignedLong: Long
+    get() = java.lang.Long.parseUnsignedLong(this)
+
+val String.quote: String
+    get() = "\"$this\""

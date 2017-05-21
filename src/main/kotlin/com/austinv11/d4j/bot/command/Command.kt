@@ -30,7 +30,7 @@ import kotlin.streams.toList
 
 var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand(),
         RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand(), KotlinEvalCommand(),
-        JavaEvalCommand())
+        JavaEvalCommand(), TagCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()
@@ -122,8 +122,8 @@ abstract class CommandExecutor {
     }
     
     fun submit(cmd: Command): Mono<Result> = wrappers.toFlux().sort { o1, o2 -> 
-                if (o1.params.size < o2.params.size) -1 else if (o1.params.size > o2.params.size) 1 else 0
-            }.filter { it.paramDescriptions.stream().map { it.third }.filter { it }.count() <= cmd.rawArgs.size }
+                if (o1.params.size < o2.params.size) 1 else if (o1.params.size > o2.params.size) -1 else 0
+            }.filter { it.paramDescriptions.filter { !it.third }.size <= cmd.rawArgs.size }
             .filter { it.shouldBeInvoked(cmd) }
             .next()
             .map {
@@ -242,7 +242,8 @@ abstract class CommandExecutor {
         }
         
         fun shouldBeInvoked(cmd: Command): Boolean {
-            return cmd.rawArgs.mapArgs(cmd) != null
+            val mapped = cmd.rawArgs.mapArgs(cmd)
+            return mapped != null && mapped.size >= this.paramDescriptions.filter { !it.third }.size
         }
         
         fun invoke(cmd: Command): Pair<Boolean?, EmbedObject?>? {
