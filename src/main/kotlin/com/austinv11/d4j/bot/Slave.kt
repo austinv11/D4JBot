@@ -1,9 +1,12 @@
 package com.austinv11.d4j.bot
 
+import com.austinv11.d4j.bot.audio.LavaplayerProvider
+import com.austinv11.d4j.bot.audio.playerManager
 import com.austinv11.d4j.bot.command.Command
 import com.austinv11.d4j.bot.command.createCommand
 import com.austinv11.d4j.bot.command.isCommand
 import com.austinv11.d4j.bot.extensions.stream
+import reactor.core.publisher.toFlux
 import sx.blah.discord.Discord4J
 import sx.blah.discord.api.ClientBuilder
 import sx.blah.discord.api.IDiscordClient
@@ -63,8 +66,12 @@ fun main(args: Array<String>) {
             .doOnNext { warn("Shard abandoned!") }
             .subscribe { restart() }
     
-    CLIENT.stream<ReadyEvent>()
-            .subscribe { info("Logged in!") }
+    val readyStream = CLIENT.stream<ReadyEvent>()
+    
+    readyStream.concatMap { it.client.guilds.toFlux() }
+            .subscribe { it.audioManager.audioProvider = LavaplayerProvider(it.playerManager) }
+            
+    readyStream.subscribe { info("Logged in!") }
     
     CLIENT.stream<MessageReceivedEvent>()
             .map { it.message }

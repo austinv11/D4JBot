@@ -29,7 +29,7 @@ val FUEL_IMPORTS = arrayOf("com.github.kittinunf.fuel", "com.github.kittinunf.fu
         "com.github.kittinunf.fuel.core")
 
 val BOT_IMPORTS = arrayOf("com.austinv11.d4j.bot", "com.austinv11.d4j.bot.scripting", "com.austinv11.d4j.bot.extensions",
-        "com.austinv11.d4j.bot.command", "com.austinv11.d4j.bot.util", "com.austinv11.d4j.bot.db")
+        "com.austinv11.d4j.bot.command", "com.austinv11.d4j.bot.util", "com.austinv11.d4j.bot.db", "com.austinv11.d4j.bot.audio")
 
 interface IScriptCompiler {
     

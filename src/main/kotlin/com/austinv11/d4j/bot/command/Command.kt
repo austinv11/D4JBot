@@ -30,7 +30,8 @@ import kotlin.streams.toList
 
 var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand(),
         RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand(), KotlinEvalCommand(),
-        JavaEvalCommand(), TagCommand(), SQLCommand())
+        JavaEvalCommand(), TagCommand(), SQLCommand(), JoinCommand(), LeaveCommand(), PlayCommand(), PauseCommand(),
+        QueueCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()

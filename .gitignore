@@ -133,3 +133,4 @@ fabric.properties
 config.json
 token.txt
 bot.db
+!/src/main/kotlin/com/austinv11/d4j/bot/command/impl/JoinCommand.kt

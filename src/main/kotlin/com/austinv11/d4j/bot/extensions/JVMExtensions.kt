@@ -3,6 +3,7 @@ package com.austinv11.d4j.bot.extensions
 import com.austinv11.d4j.bot.CLIENT
 import com.austinv11.d4j.bot.command.Command
 import sx.blah.discord.handle.obj.*
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
 fun String.coerceTo(`class`: KClass<*>, command: Command): Any? = when(`class`) {
@@ -105,3 +106,9 @@ val String.unsignedLong: Long
 
 val String.quote: String
     get() = "\"$this\""
+
+fun Long.msToTimestamp(): String {
+    val min = TimeUnit.MINUTES.convert(this, TimeUnit.MILLISECONDS)
+    val seconds = TimeUnit.SECONDS.convert(this - TimeUnit.MILLISECONDS.convert(min, TimeUnit.MINUTES), TimeUnit.MILLISECONDS)
+    return "$min:$seconds"
+}
