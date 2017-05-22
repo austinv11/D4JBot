@@ -30,7 +30,7 @@ import kotlin.streams.toList
 
 var COMMANDS: Array<CommandExecutor> = arrayOf(PingCommand(), UpdateCommand(), ShutdownCommand(), HelpCommand(),
         RestartCommand(), UptimeCommand(), IgnoreCommand(), UnignoreCommand(), VersionCommand(), KotlinEvalCommand(),
-        JavaEvalCommand(), TagCommand())
+        JavaEvalCommand(), TagCommand(), SQLCommand())
 
 fun IMessage.isCommand(): Boolean {
     return content.startsWith(CONFIG.prefix) && COMMANDS.filter { it.checkCommandName(this.content.rawArgs()[0]) }.isNotEmpty()
@@ -188,7 +188,7 @@ abstract class CommandExecutor {
                     if (i >= params.size && params.lastOrNull()?.type?.jvmErasure?.isSubclassOf(String::class) ?: false) {
                         args = args.copyOf(i)
                         val curr = args[i-1] as String
-                        args[i-1] = curr + " " + params.subList(i, params.size).joinToString(" ")
+                        args[i-1] = curr + " " + this.copyOfRange(i, this.size).joinToString(" ")
                         return@mapArgs args
                     }
                     

@@ -18,7 +18,7 @@ object TagTable {
             val tags = mutableListOf<Tag>()
             Database.open { 
                 if (getRowCount(NAME) > 0) {
-                    getRows(NAME).closing {
+                    getRows(NAME).closeAfter {
                         while (next()) {
                             tags += Tag(getString("id"), getLong("author"), getString("content"), getLong("time"))
                         }
@@ -42,7 +42,7 @@ object TagTable {
         Database.open {
             if (!rowExists(NAME, "id", name.quote)) return@getTag null
 
-            val tag = getContrainedRows(NAME, "id" to name.quote).closing {
+            val tag = getContrainedRows(NAME, "id" to name.quote).closeAfter {
                 Tag(getString("id"), getLong("author"), getString("content"), getLong("time"))
             }
             return tag

@@ -37,8 +37,18 @@ val Command.embed : EmbedBuilder
 
 fun Throwable.embedFor(cmd: Command): EmbedObject = cmd.embed
         .withTitle("Error caught!")
-        .withDesc("```\n${StringWriter().apply { this@embedFor.printStackTrace(PrintWriter(this)) }}```")
+        .withDesc("```\n${StringWriter().apply { this@embedFor.printStackTrace(PrintWriter(this)) }.toString() limitTo 10}```")
         .build()
+
+infix private fun String.limitTo(lines: Int): String = buildString { 
+    for ((i, v) in this@limitTo.lines().withIndex()) {
+        if (i >= lines)
+            break
+        else {
+            appendln(v)
+        }
+    }
+}
 
 fun String.embedFor(cmd: Command): EmbedObject = cmd.embed
         .withDesc(this)

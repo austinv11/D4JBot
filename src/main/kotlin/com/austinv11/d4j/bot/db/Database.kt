@@ -9,9 +9,9 @@ object Database {
     
     const val DEFAULT_FILE = "bot.db"
     
-    @Synchronized fun open(database: String = DEFAULT_FILE) : DatabaseHandle = DatabaseHandle(database)
+    fun open(database: String = DEFAULT_FILE) : DatabaseHandle = DatabaseHandle(database)
     
-    @Synchronized inline fun open(database: String = DEFAULT_FILE, wrapper: DatabaseHandle.() -> Unit) {
+    inline fun open(database: String = DEFAULT_FILE, wrapper: DatabaseHandle.() -> Unit) {
         val handle = open(database)
         wrapper(handle)
         if (handle.isOpen)
@@ -37,8 +37,8 @@ class DatabaseHandle(database: String) : AutoCloseable {
     fun executeRaw(line: String) { 
         statement.executeUpdate(line)
     }
-    
-    fun queryRaw(line: String) = statement.executeQuery(line)
+
+    fun queryRaw(line: String) = try { statement.executeQuery(line) } catch (t: Throwable) { null }
     
     fun defineTable(name: String, vararg types: Pair<String, String>) {
         executeRaw(buildString { 
@@ -112,27 +112,27 @@ class DatabaseHandle(database: String) : AutoCloseable {
     
     fun getRows(table: String) = queryRaw(buildString { 
         append("SELECT * FROM $table;")
-    })
+    })!!
     
     fun getRowCount(table: String) = queryRaw(buildString { 
         append("SELECT COUNT(*) AS _count FROM $table;")
-    }).closing { this.getInt("_count") }
+    })!!.closeAfter { this.getInt("_count") }
     
     fun getRowCount(table: String, vararg selectorValuePairs: Pair<String, String>) = queryRaw(buildString {
         append("SELECT COUNT(*) AS _count FROM $table WHERE ${selectorValuePairs.joinToString(", ") { it.first + " = " + it.second }};")
-    }).closing { this.getInt("_count") }
+    })!!.closeAfter { this.getInt("_count") }
     
     fun getLimitedRows(table: String, vararg selectorColumns: String) = queryRaw(buildString { 
         append("SELECT ${selectorColumns.joinToString(", ")} FROM $table;")
-    })
+    })!!
     
     fun getContrainedRows(table: String, vararg constraints: Pair<String, String>) = queryRaw(buildString { 
         append("SELECT * FROM $table WHERE ${constraints.joinToString(", ") { it.first + " = " + it.second }};")
-    })
+    })!!
     
     fun getLimitedConstrainedRows(table: String, selectorColumns: Array<String>, vararg constraints: Pair<String, String>) = queryRaw(buildString {
         append("SELECT ${selectorColumns.joinToString(", ")} FROM $table WHERE ${constraints.joinToString(", ") { it.first + " = " + it.second }};")
-    })
+    })!!
     
     override fun close() {
         statements.filter { !it.isClosed }.forEach { it.close() }
@@ -159,7 +159,7 @@ class DatabaseHandle(database: String) : AutoCloseable {
     }
 }
 
-inline fun <T> ResultSet.closing(func: ResultSet.() -> T): T {
+inline fun <T> ResultSet.closeAfter(func: ResultSet.() -> T): T {
     val returnVal = func(this)
     this.close()
     return returnVal
