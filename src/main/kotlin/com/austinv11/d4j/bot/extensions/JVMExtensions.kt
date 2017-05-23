@@ -109,6 +109,6 @@ val String.quote: String
 
 fun Long.msToTimestamp(): String {
     val min = TimeUnit.MINUTES.convert(this, TimeUnit.MILLISECONDS)
-    val seconds = TimeUnit.SECONDS.convert(this - TimeUnit.MILLISECONDS.convert(min, TimeUnit.MINUTES), TimeUnit.MILLISECONDS)
+    val seconds = TimeUnit.SECONDS.convert(this - TimeUnit.MILLISECONDS.convert(min, TimeUnit.MINUTES), TimeUnit.MILLISECONDS).toString().padStart(2, '0')
     return "$min:$seconds"
 }
