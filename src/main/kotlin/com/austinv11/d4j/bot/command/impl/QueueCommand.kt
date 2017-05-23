@@ -25,7 +25,7 @@ class QueueCommand : CommandExecutor() {
         channel.typingStatus = true
         val context = context
         val msg = buffer { channel.sendMessage(context.embed.withTitle("Processing...").build()) }
-        context.guild!!.playerManager.queue.add(msg to context, track)
+        context.guild!!.playerManager.queue.add(msg to context, track.removePrefix("<").removeSuffix(">"))
     }
     
     @Executor("Performs an action on the queue.")

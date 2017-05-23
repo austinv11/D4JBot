@@ -25,7 +25,7 @@ fun EmbedBuilder.appendQueueInfo(manager: LavaplayerManager): EmbedBuilder {
         withAuthorUrl(info.uri)
         appendField(info.title, buildString {
             val pos = ((track.position.toDouble() / track.duration.toDouble()) * 10.0).toInt()
-            appendln(":heavy_minus_sign:".repeat(10).replaceRange(pos, pos+":heavy_minus_sign:".length, ":radio_button:") + " ${track.position.msToTimestamp()}/${track.duration.msToTimestamp()}")
+            appendln("➖".repeat(10).replaceRange(pos, pos+1, "🔘") + " ${track.position.msToTimestamp()}/${track.duration.msToTimestamp()}")
         }, false)
     } else {
         withDesc("None.")
